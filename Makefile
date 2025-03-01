@@ -8,7 +8,7 @@
 # dh_account:    L'account (ad esempio su Docker Hub) usato per taggare/pushare l'immagine.
 # submit_file    Nome del file usato per sottomettere i job sulla DGX
 # ---------------------------------------------------------------------------
-version     ?= v1.0
+version     ?= v1.1
 name        ?= $(notdir $(CURDIR))
 sif_image   ?= $(name)_$(version).sif
 image       := $(name):$(version)
@@ -23,7 +23,7 @@ submit_file ?= ./submit.sh
 #         lo usa; altrimenti, usa il valore di default (run.R).
 # Questo permette di eseguire script diversi senza modificare il Makefile.
 # ---------------------------------------------------------------------------
-ARGS   := $(filter-out all update restart stop run remove build tag push singularity, $(MAKECMDGOALS))
+ARGS   := $(filter-out all update restart stop run run-cpu remove build tag push singularity, $(MAKECMDGOALS))
 script := $(if $(ARGS), $(firstword $(ARGS)), run.R)
 
 # ---------------------------------------------------------------------------
@@ -31,7 +31,7 @@ script := $(if $(ARGS), $(firstword $(ARGS)), run.R)
 #
 # Serve ad evitare conflitti se esistono file con lo stesso nome dei target.
 # ---------------------------------------------------------------------------
-.PHONY: all build run stop remove tag push pull-singularity run-singularity restart update
+.PHONY: all build run run-cpu stop remove tag push pull-singularity run-singularity restart update
 
 # ---------------------------------------------------------------------------
 # Target: all
@@ -66,8 +66,10 @@ build:
 # Perché: Consente di testare l'immagine e lo script in un ambiente controllato ma con impostazioni analoghe a quelle di esecuzione finale.
 # ---------------------------------------------------------------------------
 run:
-	docker run -it --rm --gpus all --name $(name) -u $(shell id -u):$(shell id -g) -v $(PWD):/project $(image) $(script)
+	docker run -it --rm --gpus all --name $(name) -u $(shell id -u):$(shell id -g) -v $(CURDIR):/project $(image) $(script)
 
+run-cpu:
+	docker run -it --rm --name $(name) -u $(shell id -u):$(shell id -g) -v $(CURDIR):/project $(image) $(script)
 # ---------------------------------------------------------------------------
 # Target: stop
 #
